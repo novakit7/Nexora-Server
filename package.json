@@ -1,0 +1,29 @@
+{
+  "name": "nexora-server",
+  "version": "1.0.0",
+  "description": "this is server for my video-social media platform",
+  "keywords": [
+    "video",
+    "social",
+    "media",
+    "sharing"
+  ],
+  "homepage": "https://github.com/novakit7/Nexora-Server#readme",
+  "bugs": {
+    "url": "https://github.com/novakit7/Nexora-Server/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/novakit7/Nexora-Server.git"
+  },
+  "license": "MIT",
+  "author": "Ankit verma",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
