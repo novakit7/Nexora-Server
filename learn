@@ -1,0 +1,14 @@
+//steps to register user
+//1. get user details from request body
+//2. check if user already exists with the same email or username
+//3. get avatar and cover image from request files
+//4. upload avatar and cover image to cloudinary
+//5. create new user in database
+//6. send response with created user details (except password and refresh token)
+//7. handle errors and send appropriate error responses
+//validation for required fields and file uploads
+//error handling for user creation and file uploads
+//response structure with status code, message, data, and success flag
+//use asyncHandler to handle errors in async functions and pass them to error handling middleware
+//use ApiError class to create custom error objects with status code, message, and additional error details
+//use ApiResponse class to create consistent response objects with status code, message, data, and success flag
