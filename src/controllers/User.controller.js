@@ -159,7 +159,7 @@ const logOutUser = asyncHandler(async (req, res) => {
     .status(200)
     .clearCookie("accessToken", options)
     .clearCookie("refreshToken", options)
-    .json(new ApiResponse(200, "User logged out sucessfully"));
+    .json(new ApiResponse(200, "User logged out sucessfully", {}));
 });
 
 //access token refress
@@ -191,11 +191,10 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       .cookie("accessToken", accessToken, options)
       .cookie("refreshToken", newRefreshToken, options)
       .json(
-        new ApiResponse(
-          200,
-          { accessToken, newRefreshToken },
-          "Access token is refreshed sucessfully",
-        ),
+        new ApiResponse(200, "Access token is refreshed sucessfully", {
+          accessToken,
+          newRefreshToken,
+        }),
       );
   } catch (error) {
     throw new ApiError(
@@ -226,15 +225,14 @@ const changePassword = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, {}, "password changed suessfullly!!"));
+    .json(new ApiResponse(200, "password changed suessfullly!!", {}));
 });
 
 //get current user info.............
 const getCurrentUser = asyncHandler(async (req, res) => {
-  const user = req.user;
   return res
     .status(200)
-    .json(new ApiResponse(200, user, "Current user fetched successfully"));
+    .json(new ApiResponse(200, "Current user fetched successfully", req.user));
 });
 
 // update account details..........
@@ -243,7 +241,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
   if (!fullName || !email) {
     throw new ApiError(400, "All fields are required");
   }
-  const user = User.findByIdAndUpdate(
+  const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: {
@@ -253,6 +251,9 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     },
     { new: true },
   ).select("-password");
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
   res
     .status(200)
     .json(new ApiResponse(200, user, "Accout details Updated Successfully.."));
@@ -264,7 +265,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
   if (!avatarLocalPath) {
     throw new ApiError(400, "Avatar file is Missing..");
   }
-  const avatar = uploadOnCloudinary(avatarLocalPath);
+  const avatar = await uploadOnCloudinary(avatarLocalPath);
   if (!avatar.url) {
     throw new ApiError(500, "Failed to upload Avatar");
   }
@@ -272,23 +273,25 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     req.user?._id,
     {
       $set: {
-        avatar: avatar.url,
+        avatar: avatar.url
       },
     },
-    { new: true },
+    {
+      returnDocument: "after",
+    },
   ).select("-password");
   res
     .status(200)
-    .json(new ApiResponse(200, { user }, "avatar is Updated sucessfully"));
+    .json(new ApiResponse(200, "avatar is Updated sucessfully", user));
 });
 
 // update cover image..........
 const updateUserCoverImage = asyncHandler(async (req, res) => {
   const CoverImageLocalPath = req.file?.path;
-  if (!coverImageLocalPath) {
+  if (!CoverImageLocalPath) {
     throw new ApiError(400, "cover image file is Missing..");
   }
-  const avatar = uploadOnCloudinary(coverImageLocalPath);
+  const coverImage = await uploadOnCloudinary(CoverImageLocalPath);
   if (!coverImage.url) {
     throw new ApiError(500, "Failed to upload cover image");
   }
@@ -303,7 +306,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
   ).select("-password");
   res
     .status(200)
-    .json(new ApiResponse(200, { user }, "cover image is Updated sucessfully"));
+    .json(new ApiResponse(200, "cover image is Updated sucessfully", user));
 });
 
 //get subscribers and subscriptions.......
@@ -427,8 +430,8 @@ const getWatchHistory = asyncHandler(async (req, res) => {
     .json(
       new ApiResponse(
         200,
-        user[0].watchHistory,
         "watch history fetched successfully.",
+        user[0].watchHistory
       ),
     );
 });
