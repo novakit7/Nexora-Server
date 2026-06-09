@@ -7,7 +7,7 @@ const tweetSchema = new Schema(
       required: true
     },
     owner: {
-      type: Schema.types.objectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
   },
