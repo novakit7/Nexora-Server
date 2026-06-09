@@ -8,11 +8,11 @@ const commentSchema = new Schema(
       required: true,
     },
     video: {
-      type: Schema.types.objectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "Video",
     },
     owner: {
-      type: Schema.types.objectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
   },
@@ -22,4 +22,4 @@ const commentSchema = new Schema(
 );
 
 commentSchema.plugin(mongoosePaginate);
-export const Commnet = mongoose.model("Comment", commentSchema);
+export const Comment = mongoose.model("Comment", commentSchema);

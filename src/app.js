@@ -28,7 +28,7 @@ import tweetRouter from "./routes/tweet.routes.js";
 
 //routes decleration
 app.use("/api/v1/user", userRouter);
-app.use("/api/vi/video", videoRouter);
+app.use("/api/v1/video", videoRouter);
 app.use("/api/v1",healthRouter);
 app.use("/api/v1/tweet", tweetRouter);
 
