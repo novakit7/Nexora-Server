@@ -19,7 +19,31 @@ const createTweet = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, "tweet created sucessfully", tweet));
 });
 
-const getUserTweets = asyncHandler(async (req, res) => {});
+// current user tweets..........
+const getUserTweets = asyncHandler(async (req, res) => {
+  const tweets = await Tweet.find({
+    owner: req.user._id,
+  }).sort({ createdAt: -1 });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "user tweets fetched sucessfully.", tweets));
+});
+
+const allTweets = asyncHandler(async (req, res) => {
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 10;
+
+  const tweets = await Tweet.find({})
+    .populate("owner", "username avatar")
+    .sort({ createdAt: -1 })
+    .skip((page - 1) * limit)
+    .limit(limit);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "All tweets fetched successfully", tweets));
+});
 
 // update tweets..............
 const updateTweet = asyncHandler(async (req, res) => {
@@ -58,7 +82,23 @@ const updateTweet = asyncHandler(async (req, res) => {
 });
 
 const deleteTweet = asyncHandler(async (req, res) => {
-  //TODO: delete tweet
+  const { tweetId } = req.params;
+
+  const deletedTweet = await Tweet.findOneAndDelete({
+    _id: tweetId,
+    owner: req.user._id,
+  });
+
+  if (!deletedTweet) {
+    throw new ApiError(
+      404,
+      "Tweet not found or you are not authorized to delete it",
+    );
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Tweet deleted successfully", {}));
 });
 
-export { createTweet, getUserTweets, updateTweet, deleteTweet };
+export { createTweet, getUserTweets, updateTweet, deleteTweet, allTweets };
