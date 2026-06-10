@@ -109,17 +109,100 @@ const getVideoById = asyncHandler(async (req, res) => {
 
 const updateVideo = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
-  //TODO: update video details like title, description, thumbnail
+  if (!mongoose.Types.ObjectId.isValid(videoId)) {
+    throw new ApiError(400, "Invalid video ID");
+  }
+  const { newTitle, newDescription } = req.body;
+  if (!newTitle && !newDescription) {
+    throw new ApiError(
+      400,
+      "At least one field (newTitle or newDescription) is required",
+    );
+  }
+  const updateFields = {};
+  if (newTitle?.trim()) {
+    updateFields.title = newTitle.trim();
+  }
+  if (newDescription?.trim()) {
+    updateFields.description = newDescription.trim();
+  }
+  const video = await Video.findOneAndUpdate(
+    {
+      _id: videoId,
+      owner: req.user?._id,
+    },
+    {
+      $set: updateFields,
+    },
+    {
+      returnDocument: "after",
+    },
+  );
+  if (!video) {
+    throw new ApiError(404, "Video not found or unauthorized");
+  }
+  return res
+    .status(200)
+    .json(new ApiResponse(200, video, "Video updated successfully"));
+});
+
+//thumbnail update................
+const updateThumbnail = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(videoId)) {
+    throw new ApiError(400, "Invalid video ID");
+  }
+  const thumbnailLocalPath = req.file?.path;
+  if (!thumbnailLocalPath) {
+    throw new ApiError(400, "thumbnail file is Missing..");
+  }
+  const thumbnail = await uploadOnCloudinary(thumbnailLocalPath);
+  if (!thumbnail.url) {
+    throw new ApiError(500, "Failed to upload thumbnail");
+  }
+  const video = await Video.findOneAndUpdate(
+    {
+      _id: videoId,
+      owner: req.user?._id,
+    },
+    {
+      $set: {
+        thumbnail: thumbnail.url,
+      },
+    },
+    {
+      returnDocument: "after",
+    },
+  );
+  if (!video) {
+    throw new ApiError(404, "Video not found or unauthorized");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "thumbnail is Updated sucessfully", video));
 });
 
 const deleteVideo = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
-  //TODO: delete video
+  if (!mongoose.Types.ObjectId.isValid(videoId)) {
+    throw new ApiError(400, "Invalid video ID");
+  }
+  const video = await Video.findOneAndDelete({
+    _id: videoId,
+    owner: req.user?._id,
+  });
+  if (!video) {
+    throw new ApiError(404, "Video not found or unauthorized");
+  }
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "video deleted  sucessfully", video));
 });
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
-  if(!mongoose.Types.ObjectId.isValid(videoId)) {
+  if (!mongoose.Types.ObjectId.isValid(videoId)) {
     throw new ApiError(400, "Invalid video ID");
   }
   const updatedVideo = await Video.findByIdAndUpdate(
@@ -127,27 +210,29 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
     [
       {
         $set: {
-          isPublished: { $not: "$isPublished" }
-        }
-      }
+          isPublished: { $not: "$isPublished" },
+        },
+      },
     ],
     {
       returnDocument: "after",
-      updatePipeline: true
-    }
+      updatePipeline: true,
+    },
   );
 
   if (!updatedVideo) {
     throw new ApiError(404, "Video not found");
   }
 
-  return res.status(200).json(
-    new ApiResponse(
-      200,
-      `Video ${updatedVideo.isPublished ? "published" : "unpublished"} successfully`,
-      updatedVideo
-    )
-  );
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        `Video ${updatedVideo.isPublished ? "published" : "unpublished"} successfully`,
+        updatedVideo,
+      ),
+    );
 });
 
 export {
@@ -157,4 +242,5 @@ export {
   updateVideo,
   deleteVideo,
   togglePublishStatus,
+  updateThumbnail,
 };

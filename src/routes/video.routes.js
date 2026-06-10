@@ -7,6 +7,7 @@ import {
   getVideoById,
   publishAVideo,
   togglePublishStatus,
+  updateThumbnail,
   updateVideo,
 } from "../controllers/video.controller.js";
 import commentRouter from "./comment.routes.js";
@@ -37,6 +38,12 @@ videoRouter
   .patch(updateVideo)
   .delete(deleteVideo);
 
-  videoRouter.patch("/:videoId/publish", togglePublishStatus);
+videoRouter.route("/:videoId/publish").patch(togglePublishStatus);
+videoRouter.route("/:videoId/update-thumbnail").patch(
+  upload.single("thumbnail"),
+  updateThumbnail,
+);
+
+videoRouter.route("/:videoId/update-details").patch(updateVideo);
 
 export default videoRouter;
