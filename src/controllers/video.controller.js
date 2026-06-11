@@ -4,6 +4,7 @@ import { ApiError } from "../utils/ApiErrors.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { Like } from "../models/like.model.js";
 
 const getAllVideos = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
@@ -95,16 +96,45 @@ const publishAVideo = asyncHandler(async (req, res) => {
 
 const getVideoById = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
+
   if (!mongoose.Types.ObjectId.isValid(videoId)) {
     throw new ApiError(400, "Invalid video ID");
   }
-  const video = await Video.findById(videoId);
+
+  const video = await Video.findByIdAndUpdate(
+    videoId,
+    {
+      $inc: {
+        views: 1,
+      },
+    },
+    {
+      returnDocument: "after",
+    },
+  );
+
   if (!video) {
-    throw new ApiError(400, "video does not exist.");
+    throw new ApiError(404, "Video does not exist");
   }
+
+  const likesCount = await Like.countDocuments({
+    video: videoId,
+  });
+
+  const isLiked = !!(await Like.exists({
+    video: videoId,
+    likedBy: req.user?._id,
+  }));
+
+  const videoData = {
+    ...video.toObject(),
+    likesCount,
+    isLiked,
+  };
+
   return res
     .status(200)
-    .json(new ApiResponse(200, "video fetched sucessfully", video));
+    .json(new ApiResponse(200, "video fetched sucessfully", videoData));
 });
 
 const updateVideo = asyncHandler(async (req, res) => {
