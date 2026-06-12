@@ -38,6 +38,6 @@ app.use("/api/v1/tweet", tweetRouter);
 app.use("/api/v1/like", likeRouter);
 app.use("/api/v1/subscription", subscriptionRouter);
 app.use("/api/v1/dashboard",dashboardRouter);
-app.use("/api/vi/playlist",playlistRouter);
+app.use("/api/v1/playlist",playlistRouter);
 
 export { app };
