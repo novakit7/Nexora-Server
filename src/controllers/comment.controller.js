@@ -13,13 +13,66 @@ const getVideoComments = asyncHandler(async (req, res) => {
   if (!videoId) {
     throw new ApiError(400, "videoId is required");
   }
-  const comments = await Comment.find({
-    video: videoId,
-  })
-    .populate("owner", "username avatar")
-    .sort({ createdAt: -1 })
-    .skip((page - 1) * limit)
-    .limit(limit);
+  const comments = await Comment.aggregate([
+  {
+    $match: {
+      video: new mongoose.Types.ObjectId(videoId),
+    },
+  },
+  {
+    $sort: {
+      createdAt: -1,
+    },
+  },
+  {
+    $lookup: {
+      from: "users",
+      localField: "owner",
+      foreignField: "_id",
+      as: "owner",
+    },
+  },
+  {
+    $unwind: "$owner",
+  },
+  {
+    $lookup: {
+      from: "likes",
+      localField: "_id",
+      foreignField: "comment",
+      as: "likes",
+    },
+  },
+  {
+    $addFields: {
+      likesCount: {
+        $size: "$likes",
+      },
+      isLiked: {
+        $in: [req.user._id, "$likes.likedBy"],
+      },
+    },
+  },
+  {
+    $project: {
+      content: 1,
+      createdAt: 1,
+      likesCount: 1,
+      isLiked: 1,
+      owner: {
+        _id: "$owner._id",
+        username: "$owner.username",
+        avatar: "$owner.avatar",
+      },
+    },
+  },
+  {
+    $skip: (page - 1) * limit,
+  },
+  {
+    $limit: limit,
+  },
+]);
 
   return res
     .status(200)
